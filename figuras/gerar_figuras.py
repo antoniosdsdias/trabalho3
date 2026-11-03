@@ -92,46 +92,103 @@ fig.savefig("esquema_fisico.png", dpi=110)
 plt.close(fig)
 
 # ---------------------------------------------------------------- DCL
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 5.2))
+# eixos t (tangente, sentido da velocidade) e n (normal) que andam com o corpo
+COR_EIXO = "#333333"
+COR_COMP = "#d9895f"
 
-# fase 1: pessoa + carrinho no trilho
+
+def comp(ax, p0, p1, texto, desloc):
+    # componente do peso (tracejada)
+    ax.add_patch(FancyArrowPatch(p0, p1, arrowstyle="-|>", mutation_scale=14,
+                                 color=COR_COMP, lw=1.6, ls="--", zorder=4))
+    ax.text(p1[0] + desloc[0], p1[1] + desloc[1], texto, color=COR_COMP,
+            fontsize=11, ha="center", va="center", zorder=6)
+
+
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5.6))
+
+# instante 1: parado no canhão, preso pelo elástico (s = 0)
 p_b = np.array([0, 0])
 p_t = p_b + 9 * u
 ax1.plot(*zip(p_b, p_t), color="black", lw=5)
 ax1.plot([-1, 5], [0, 0], color="gray", ls="--", lw=1)
-ax1.add_patch(Arc(tuple(p_b), 3, 3, theta1=0, theta2=70, lw=1.2))
-ax1.text(1.75, 0.5, "α", fontsize=13)
-c = p_b + 5 * u + 0.45 * nrm
+ax1.add_patch(Arc(tuple(p_b), 2.4, 2.4, theta1=0, theta2=70, lw=1.2))
+ax1.text(1.45, 0.4, "α", fontsize=13)
+c = p_b + 4.6 * u + 0.45 * nrm
 bloco = [c + du * u + dn * nrm for du, dn in [(-0.7, -0.45), (0.7, -0.45), (0.7, 0.45), (-0.7, 0.45)]]
-ax1.add_patch(Polygon(bloco, color="#e0efef", ec="black", zorder=4))
-seta(ax1, c, c + 2.6 * u, COR_FORCA, "$F_{el}$", (-0.6, 0.15))
-seta(ax1, c, c - 1.8 * u, COR_ATRITO, "$F_{at}$", (-0.6, -0.2))
-seta(ax1, c, c + 2.0 * nrm, COR_FORCA, "$N$", (-0.35, 0.2))
-seta(ax1, c, c + np.array([0, -2.8]), COR_FORCA, "$P$", (0.45, -0.1))
-seta(ax1, np.array([4.0, 1.0]), np.array([4.0, 1.0]) + 1.5 * u, COR_VEL, "s", (0.3, 0.1), lw=1.5)
-ax1.set_xlim(-1.5, 6)
-ax1.set_ylim(-0.5, 10)
+ax1.add_patch(Polygon(bloco, color="#e0efef", ec="black", zorder=3))
+ax1.plot(*zip(c + 0.7 * u, p_t + 0.3 * nrm), color=COR_FORCA, lw=1.2, ls=(0, (4, 2)))
+ax1.text(*(p_t + 0.7 * nrm + np.array([0, -0.6])), "elásticos", color=COR_FORCA, fontsize=9, ha="right")
+seta(ax1, c, c + 2.8 * u, COR_FORCA, "$F_{el}$", (-0.55, 0.1))
+seta(ax1, c - 0.4 * nrm, c - 0.4 * nrm - 1.3 * u, COR_ATRITO, "$F_{at}$", (0.75, 0.2))
+seta(ax1, c + 0.35 * nrm, c + 0.35 * nrm - 1.0 * u, COR_FORCA, "$F_{ar}$", (-0.55, 0.0))
+seta(ax1, c, c + 1.9 * nrm, COR_FORCA, "$N$", (-0.3, 0.25))
+seta(ax1, c, c + np.array([0, -2.4]), COR_FORCA, "$P$", (0.4, -0.1))
+comp(ax1, c, c - 2.4 * np.sin(a) * u, "$P\\,\\mathrm{sen}\\,\\alpha$", (-1.0, 0.1))
+comp(ax1, c, c - 2.4 * np.cos(a) * nrm, "$P\\cos\\alpha$", (0.9, 0.05))
+o = np.array([4.2, 2.6])
+seta(ax1, o, o + 1.4 * u, COR_EIXO, "t", (0.25, 0.1), lw=1.5)
+seta(ax1, o, o + 1.4 * nrm, COR_EIXO, "n", (-0.15, 0.25), lw=1.5)
+ax1.text(2.2, -1.4, "em n: $N - P\\cos\\alpha = 0$  →  $N = P\\cos\\alpha$\n"
+                    "em t: $F_{el} - P\\,\\mathrm{sen}\\,\\alpha - F_{at} - F_{ar} = (m+M)\\,a_t$\n"
+                    "($F_{ar} = 0$ no repouso e cresce com $v^2$)",
+         fontsize=10.5, ha="center", va="top")
+ax1.set_xlim(-2, 6.5)
+ax1.set_ylim(-2.6, 9.5)
 ax1.set_aspect("equal")
 ax1.axis("off")
-ax1.set_title("Fase 1: dentro do canhão\ncorpo = pessoa + carrinho (m + M)", fontsize=12)
+ax1.set_title("1) No canhão: sai do repouso e sobe o trilho\ncorpo = pessoa + carrinho (m + M)", fontsize=12)
 
-# fase 2: pessoa em voo
-t = np.linspace(0, 1, 100)
-ax2.plot(8 * t, 6 * t - 6 * t**2 + 1, color="gray", ls="--", lw=1.2)
-p = np.array([2.0, 6 * 0.25 - 6 * 0.25**2 + 1])
-dv = np.array([8, 6 - 12 * 0.25])
+# instante 2: em voo, subindo
+tt = np.linspace(0, 1, 100)
+ax2.plot(8 * tt, 7 * tt - 7 * tt**2 + 1, color="gray", ls="--", lw=1.2)
+tp = 0.18
+p = np.array([8 * tp, 7 * tp - 7 * tp**2 + 1])
+dv = np.array([8, 7 - 14 * tp])
 dv = dv / np.linalg.norm(dv)
-ax2.plot(*p, "o", ms=14, color="#e0efef", mec="black", zorder=4)
-seta(ax2, p, p + 1.8 * dv, COR_VEL, "$\\vec{v}$", (0.3, 0.15))
-seta(ax2, p, p - 1.5 * dv, COR_FORCA, "$F_{ar}$", (-0.1, -0.45))
-seta(ax2, p, p + np.array([0, -2.2]), COR_FORCA, "$P$", (0.4, 0))
-seta(ax2, (5.5, -0.6), (7, -0.6), "black", "x", (0.3, 0), lw=1.5)
-seta(ax2, (5.5, -0.6), (5.5, 0.9), "black", "y", (0, 0.3), lw=1.5)
-ax2.set_xlim(-0.5, 8.5)
-ax2.set_ylim(-1, 3.5)
+dn = np.array([dv[1], -dv[0]])          # normal para o lado de dentro da curva
+teta = np.arctan2(dv[1], dv[0])
+ax2.plot([p[0], p[0] + 1.6], [p[1], p[1]], color="gray", lw=0.8)
+ax2.add_patch(Arc(tuple(p), 2.2, 2.2, theta1=0, theta2=np.degrees(teta), lw=1.1))
+ax2.text(p[0] + 1.25, p[1] + 0.3, "θ", fontsize=12)
+ax2.plot(*p, "o", ms=14, color="#e0efef", mec="black", zorder=3)
+seta(ax2, p, p + 2.0 * dv, COR_VEL, "$\\vec{v}$", (0.1, 0.3))
+seta(ax2, p - 0.3 * dn, p - 0.3 * dn - 1.3 * dv, COR_FORCA, "$F_{ar}$", (-0.2, 0.3))
+seta(ax2, p, p + np.array([0, -2.2]), COR_FORCA, "$P$", (-0.35, -0.1))
+comp(ax2, p, p - 2.2 * np.sin(teta) * dv, "$P\\,\\mathrm{sen}\\,\\theta$", (-0.6, -0.4))
+comp(ax2, p, p + 2.2 * np.cos(teta) * dn, "$P\\cos\\theta$", (0.75, -0.1))
+o = np.array([5.6, 2.7])
+seta(ax2, o, o + 1.2 * dv, COR_EIXO, "t", (0.2, 0.1), lw=1.5)
+seta(ax2, o, o + 1.2 * dn, COR_EIXO, "n", (0.25, -0.1), lw=1.5)
+ax2.text(4.0, -1.6, "$\\cos\\theta = v_x / v$     $\\mathrm{sen}\\,\\theta = v_y / v$\n"
+                    "em t: $-F_{ar} - P\\,\\mathrm{sen}\\,\\theta = m\\,a_t$\n"
+                    "em n: $P\\cos\\theta = m\\,v^2 / r$ (curva a trajetória)",
+         fontsize=10.5, ha="center", va="top")
+ax2.set_xlim(-1.5, 8.5)
+ax2.set_ylim(-3.6, 3.6)
 ax2.set_aspect("equal")
 ax2.axis("off")
-ax2.set_title("Fase 2: em voo\ncorpo = pessoa (m)", fontsize=12)
+ax2.set_title("2) Em voo, subindo\ncorpo = pessoa (m)", fontsize=12)
+
+# instante 3: altura máxima (θ = 0)
+p = np.array([4.0, 2.75])
+ax3.plot(8 * tt, 7 * tt - 7 * tt**2 + 1, color="gray", ls="--", lw=1.2)
+ax3.plot(*p, "o", ms=14, color="#e0efef", mec="black", zorder=3)
+seta(ax3, p, p + np.array([2.0, 0]), COR_VEL, "$\\vec{v} = v_x$", (0.3, 0.35))
+seta(ax3, p, p + np.array([-1.3, 0]), COR_FORCA, "$F_{ar}$", (-0.2, 0.3))
+seta(ax3, p, p + np.array([0, -2.2]), COR_FORCA, "$P$", (0.35, -0.1))
+o = np.array([6.6, 0.4])
+seta(ax3, o, o + np.array([1.2, 0]), COR_EIXO, "t", (0.2, 0.1), lw=1.5)
+seta(ax3, o, o + np.array([0, -1.2]), COR_EIXO, "n", (0.25, -0.1), lw=1.5)
+ax3.text(4.0, -1.6, "$\\theta = 0$  →  $v_y = 0$: velocidade toda horizontal\n"
+                    "em t: $-F_{ar} = m\\,a_t$ (peso sem parte tangente)\n"
+                    "em n: $P = m\\,v^2 / r$ (peso todo na normal)",
+         fontsize=10.5, ha="center", va="top")
+ax3.set_xlim(-1.5, 8.5)
+ax3.set_ylim(-3.6, 3.6)
+ax3.set_aspect("equal")
+ax3.axis("off")
+ax3.set_title("3) Na altura máxima\ncorpo = pessoa (m)", fontsize=12)
 
 fig.tight_layout()
 fig.savefig("dcl.png", dpi=110)
